@@ -87,7 +87,9 @@ public class ServerApplication {
         public UserDetailsService userDetailsService() {
             return username -> {
                 User.UserBuilder builder = User.withUsername(username).password("NOT-USED");
-                builder = this.adminClientIds.contains(username) ? builder.roles("ADMIN", "USER") : builder.roles("USER");
+                // careful the username comes with the OU like: OU=space:dfed3da1-8df9-4f25-a8ee-815ad2eb6969 + OU=organization:18945314-d7b4-46de-8f0f-590ab249ca1b
+                String cleanupUsername = username.substring(0, username.indexOf(" "));
+                builder = this.adminClientIds.contains(cleanupUsername) ? builder.roles("ADMIN", "USER") : builder.roles("USER");
                 return builder.build();
             };
         }

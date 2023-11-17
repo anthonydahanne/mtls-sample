@@ -3,4 +3,4 @@ applications:
 - name: mtls-sample-client
   path: target/mtls-sample-client-1.0.0.BUILD-SNAPSHOT.jar
   buildpacks:
-  - https://github.com/cloudfoundry/java-buildpack.git
+  -  https://github.com/anthonydahanne/java-buildpack.git#no-client-certificate-mapper
