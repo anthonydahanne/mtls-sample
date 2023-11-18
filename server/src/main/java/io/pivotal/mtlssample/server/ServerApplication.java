@@ -22,13 +22,15 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 
 import java.security.Principal;
 import java.util.List;
@@ -73,7 +75,9 @@ public class ServerApplication {
     }
 
     @EnableWebSecurity
-    static class WebSecurityConfig extends WebSecurityConfigurerAdapter {
+    @Configuration
+    @EnableWebMvc
+    static class WebSecurityConfig {
 
         private final List<String> adminClientIds;
 
@@ -86,6 +90,8 @@ public class ServerApplication {
         @Bean
         public UserDetailsService userDetailsService() {
             return username -> {
+                // Was not reached
+                System.out.println("This is username " + username);
                 User.UserBuilder builder = User.withUsername(username).password("NOT-USED");
                 // careful the username comes with the OU like: OU=space:dfed3da1-8df9-4f25-a8ee-815ad2eb6969 + OU=organization:18945314-d7b4-46de-8f0f-590ab249ca1b
                 String cleanupUsername = username.substring(0, username.indexOf(" "));
@@ -94,17 +100,17 @@ public class ServerApplication {
             };
         }
 
-        @Override
-        protected void configure(HttpSecurity http) throws Exception {
-            // @formatter:off
+        @Bean
+        public SecurityFilterChain configure(HttpSecurity http) throws Exception {
+            // Was reached
+            System.out.println("Configuring HttpSecurity");
             http
-                .x509()
-                    .subjectPrincipalRegex("OU=app:(.*?)(?:,|$)")
-                    .and()
-                .authorizeRequests()
-                    .mvcMatchers("/admin/**").hasRole("ADMIN")
-                    .anyRequest().authenticated();
-            // @formatter:on
+                    .x509(httpSecurityX509Configurer -> httpSecurityX509Configurer.subjectPrincipalRegex("OU=app:(.*?)(?:,|$)"))
+                    .authorizeRequests((authz) -> authz
+                            .requestMatchers("/admin/**").hasRole("ADMIN")
+                            .anyRequest().authenticated()
+                    );
+            return http.build();
         }
 
     }

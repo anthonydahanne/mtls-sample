@@ -1,6 +1,11 @@
 ---
 applications:
 - name: mtls-sample-server
-  path: target/mtls-sample-server-1.0.0.BUILD-SNAPSHOT.jar
+  path: target/mtls-sample-server-2.0.0-SNAPSHOT.jar
   buildpacks:
     - https://github.com/anthonydahanne/java-buildpack.git#client-certificate-mapper-2
+  env:
+    #    JBP_CONFIG_SPRING_AUTO_RECONFIGURATION: '{enabled: false}'
+    SPRING_PROFILES_ACTIVE: http2
+    JBP_CONFIG_OPEN_JDK_JRE: '{ jre: { version: 17.+ } }'
+    MTLS_ADMIN_CLIENT_IDS: 5c72f5bf-cca2-4ece-ae04-ea15f2f114d9
