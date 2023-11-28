@@ -24,9 +24,9 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -73,7 +73,7 @@ public class ServerApplication {
     }
 
     @EnableWebSecurity
-    static class WebSecurityConfig extends WebSecurityConfigurerAdapter {
+    static class WebSecurityConfig {
 
         private final List<String> adminClientIds;
 
@@ -94,8 +94,8 @@ public class ServerApplication {
             };
         }
 
-        @Override
-        protected void configure(HttpSecurity http) throws Exception {
+        @Bean
+        public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
             // @formatter:off
             http
                 .x509()
@@ -105,6 +105,7 @@ public class ServerApplication {
                     .mvcMatchers("/admin/**").hasRole("ADMIN")
                     .anyRequest().authenticated();
             // @formatter:on
+            return http.build();
         }
 
     }

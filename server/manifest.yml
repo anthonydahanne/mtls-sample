@@ -4,3 +4,6 @@ applications:
   path: target/mtls-sample-server-1.0.0.BUILD-SNAPSHOT.jar
   buildpacks:
     - https://github.com/anthonydahanne/java-buildpack.git#client-certificate-mapper-2
+  env:
+    JBP_CONFIG_OPEN_JDK_JRE: '{ jre: { version: 17.+ } }'
+    MTLS_ADMIN_CLIENT_IDS: 5c72f5bf-cca2-4ece-ae04-ea15f2f114d9
