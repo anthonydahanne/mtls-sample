@@ -21,14 +21,17 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.servlet.util.matcher.MvcRequestMatcher;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.handler.HandlerMappingIntrospector;
 
 import java.security.Principal;
 import java.util.List;
@@ -85,6 +88,7 @@ public class ServerApplication {
 
         @Bean
         public UserDetailsService userDetailsService() {
+            System.out.println("UserDetailsService bean was loaded!");
             return username -> {
                 User.UserBuilder builder = User.withUsername(username).password("NOT-USED");
                 // careful the username comes with the OU like: OU=space:dfed3da1-8df9-4f25-a8ee-815ad2eb6969 + OU=organization:18945314-d7b4-46de-8f0f-590ab249ca1b
@@ -97,12 +101,16 @@ public class ServerApplication {
         @Bean
         public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
             // @formatter:off
+            HandlerMappingIntrospector introspector = new HandlerMappingIntrospector();
+            introspector.setApplicationContext(http.getSharedObject(ApplicationContext.class));
+            String mvcPattern = "/admin/**";
+            MvcRequestMatcher mvcRequestMatcher = new MvcRequestMatcher(introspector, mvcPattern);
             http
                 .x509()
                     .subjectPrincipalRegex("OU=app:(.*?)(?:,|$)")
                     .and()
                 .authorizeRequests()
-                    .mvcMatchers("/admin/**").hasRole("ADMIN")
+                    .requestMatchers(mvcRequestMatcher).hasRole("ADMIN")
                     .anyRequest().authenticated();
             // @formatter:on
             return http.build();
