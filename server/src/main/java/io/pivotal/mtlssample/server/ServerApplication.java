@@ -33,8 +33,13 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.handler.HandlerMappingIntrospector;
 
+import jakarta.servlet.http.HttpServletRequest;
 import java.security.Principal;
+import java.security.cert.X509Certificate;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @SpringBootApplication
@@ -56,7 +61,8 @@ public class ServerApplication {
         }
 
         @GetMapping("/admin")
-        String admin(Principal principal) {
+        String admin(Principal principal, HttpServletRequest request) {
+            dumpRequest(request);
             String applicationId = principal.getName();
             String certificateSerialNumber = this.serialNumberExtractor.getSerialNumber(principal);
 
@@ -65,7 +71,8 @@ public class ServerApplication {
         }
 
         @GetMapping("/")
-        String user(Principal principal) {
+        String user(Principal principal, HttpServletRequest request) {
+            dumpRequest(request);
             String applicationId = principal.getName();
             String certificateSerialNumber = this.serialNumberExtractor.getSerialNumber(principal);
 
@@ -73,6 +80,45 @@ public class ServerApplication {
             return String.format("You authenticated using x509 certificate for %s with SN %s", applicationId, certificateSerialNumber);
         }
 
+        private void dumpRequest(HttpServletRequest request) {
+            Collections.list(request.getHeaderNames())
+                    .stream()
+                    .collect(Collectors.toMap(
+                            Function.identity(),
+                            h -> Collections.list(request.getHeaders(h))
+                    )).forEach((headerName, headerValues) -> {
+                        this.logger.info("All the headers for " + headerName);
+                        headerValues.forEach(headerValue -> {
+                            this.logger.info("-> " + headerValue);
+                        });
+                    });
+            Collections.list(request.getAttributeNames())
+                    .stream()
+                    .collect(Collectors.toMap(
+                            Function.identity(),
+                            a -> request.getAttribute(a)
+                    )).forEach((attributeName, attributeValue) -> {
+                        this.logger.info("The attribute value for " + attributeName);
+                        if (attributeValue instanceof X509Certificate[]) {
+                            this.logger.info("Looks like it's a certificate array");
+                            X509Certificate[] castedAttributeValue = (X509Certificate[]) attributeValue;
+                            Arrays.asList(castedAttributeValue).forEach(x509Certificate -> {
+                                this.logger.info("-> Principal name " + x509Certificate.getSubjectX500Principal().getName());
+                                this.logger.info("-> SerialNumber " + x509Certificate.getSerialNumber());
+                            });
+                        }
+                        this.logger.info("-> " + attributeValue);
+                    });
+            Collections.list(request.getParameterNames())
+                    .stream()
+                    .collect(Collectors.toMap(
+                            Function.identity(),
+                            p -> request.getParameter(p)
+                    )).forEach((parameterName, parameterValue) -> {
+                        this.logger.info("The parameter value for " + parameterName);
+                        this.logger.info("-> " + parameterValue);
+                    });
+        }
     }
 
     @EnableWebSecurity

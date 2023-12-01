@@ -1,9 +1,10 @@
 ---
 applications:
 - name: mtls-sample-server
-  path: target/mtls-sample-server-1.0.0.BUILD-SNAPSHOT.jar
+  path: /Users/anthonyd2/workspaces/cloudfoundry/java-test-applications/web-application/build/libs/web-application-1.0.0.BUILD-SNAPSHOT.war
   buildpacks:
     - https://github.com/anthonydahanne/java-buildpack.git#client-certificate-mapper-2
   env:
     JBP_CONFIG_OPEN_JDK_JRE: '{ jre: { version: 17.+ } }'
     MTLS_ADMIN_CLIENT_IDS: 5c72f5bf-cca2-4ece-ae04-ea15f2f114d9
+    JBP_CONFIG_TOMCAT: '{ tomcat: { version: 10.1.+ } }'
